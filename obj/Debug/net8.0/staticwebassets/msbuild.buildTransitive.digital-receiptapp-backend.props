@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="..\buildMultiTargeting\digital-receiptapp-backend.props" />
+</Project>
