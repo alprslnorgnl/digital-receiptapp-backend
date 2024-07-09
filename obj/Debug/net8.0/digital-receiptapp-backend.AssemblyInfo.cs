@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("digital-receiptapp-backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b82d257aaeaac67b20ed622b78b88e9de90f806c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d695818f4566aca4c2ffea95bc3fb068efcecd34")]
 [assembly: System.Reflection.AssemblyProductAttribute("digital-receiptapp-backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("digital-receiptapp-backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
