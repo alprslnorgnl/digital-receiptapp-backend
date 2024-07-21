@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: receiptappdeployment
+  labels:
+    type: backend
+    app: receiptapp
+spec: 
+  replicas: 1
+  selector: 
+    matchLabels:
+      type: backend
+      app: receiptapp
+  template:
+    metadata:
+      name: receiptapppod
+      labels: 
+        type: backend
+        app: receiptapp
+    spec:
+      containers:
+        - name: receiptappcontainer
+          image: us.gcr.io/digital-receiptapp-backend/backend-image:v1
+          ports:
+            - containerPort: 8080
