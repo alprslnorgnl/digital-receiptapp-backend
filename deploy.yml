@@ -20,6 +20,6 @@ spec:
     spec:
       containers:
         - name: receiptappcontainer
-          image: us.gcr.io/digital-receiptapp-backend/backend-image:v1
+          image: us.gcr.io/digital-receiptapp-backend/receiptapp-image:v1
           ports:
             - containerPort: 8080
