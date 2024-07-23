@@ -164,24 +164,18 @@ public class UserController : ControllerBase
             {
                 return BadRequest(new { message = "Telefon numarası veya e-posta adresi sağlanmalı" });
             }
+            
 
+            //EMAİL GİRİLMİŞ İSE
             if (!string.IsNullOrEmpty(resetDto.Phone))
             {
-                // OTP kodu gönder
-                var result = await _otpService.SendOtpSmsAsync(resetDto.Phone!);
+                var user1 = await _context.Users.FirstOrDefaultAsync(u => u.Email == resetDto.Email);
 
-                if (!result)
+                if(user1 == null)
                 {
-                    _loggingService.LogError("OTP gönderilemedi.", new Exception("OTP gönderilemedi."));
-                    return StatusCode(500, new { message = "OTP gönderilemedi" });
+                    return BadRequest(new {message = "Bu mail adresine kayıtlı kullanıcı bulunmamaktadır"});
                 }
 
-                _loggingService.LogInfo("OTP kodu telefon numarasına gönderildi.");
-                return Ok(new { message = "OTP kodu telefon numarasına gönderildi" });
-            }
-
-            if (!string.IsNullOrEmpty(resetDto.Email))
-            {
                 // OTP kodu oluştur ve gönder
                 var otpCode = _otpService.GenerateOtpCode();
                 var result = await _otpService.SendOtpEmailAsync(resetDto.Email!, otpCode);
@@ -197,6 +191,29 @@ public class UserController : ControllerBase
 
                 _loggingService.LogInfo("OTP kodu e-posta adresine gönderildi.");
                 return Ok(new { message = "OTP kodu e-posta adresine gönderildi" });
+            }
+
+            //PHONE GİRİLMİŞ İSE
+            if (!string.IsNullOrEmpty(resetDto.Email))
+            {
+                var user1 = await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == resetDto.Phone);
+
+                if(user1 == null)
+                {
+                    return BadRequest(new {message = "Bu telefon numarasına kayıtlı kullanıcı bulunmamaktadır"});
+                }
+
+                // OTP kodu gönder
+                var result = await _otpService.SendOtpSmsAsync(resetDto.Phone!);
+
+                if (!result)
+                {
+                    _loggingService.LogError("OTP gönderilemedi.", new Exception("OTP gönderilemedi."));
+                    return StatusCode(500, new { message = "OTP gönderilemedi" });
+                }
+
+                _loggingService.LogInfo("OTP kodu telefon numarasına gönderildi.");
+                return Ok(new { message = "OTP kodu telefon numarasına gönderildi" });
             }
 
             return BadRequest(new { message = "Geçersiz istek" });
@@ -330,10 +347,11 @@ public class UserController : ControllerBase
 
             bool otpIsValid = false;
 
+            //EMAİL DOĞRULAMA İŞLEMLERİ GERÇEKLEŞTİRİLİR
             if (!string.IsNullOrEmpty(otpVDto.Phone))
             {
                 // OTP kodunu doğrulama işlemi
-                otpIsValid = _otpService.ValidateStoredOtpCode(otpVDto.Phone!, otpVDto.Code);
+                otpIsValid = await Task.Run(() => _otpService.ValidateStoredOtpCode(otpVDto.Email!, otpVDto.Code));
 
                 if (!otpIsValid)
                 {
@@ -343,10 +361,11 @@ public class UserController : ControllerBase
                 return Ok(new { message = "OTP kodu doğrulandı" });
             }
 
+            //PHONE DOĞRULAMA İŞLEMLERİ GERÇEKLEŞTİRİLİR
             if (!string.IsNullOrEmpty(otpVDto.Email))
             {
                 // OTP kodunu doğrulama işlemi
-                otpIsValid = await Task.Run(() => _otpService.ValidateStoredOtpCode(otpVDto.Email!, otpVDto.Code));
+                otpIsValid = _otpService.ValidateStoredOtpCode(otpVDto.Phone!, otpVDto.Code);
 
                 if (!otpIsValid)
                 {
@@ -400,6 +419,36 @@ public class UserController : ControllerBase
         catch (Exception ex)
         {
             _loggingService.LogError("Change phone OTP verification işlemi sırasında hata oluştu.", ex);
+            return StatusCode(500, new { message = "Beklenmedik bir hata oluştu." });
+        }
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout()
+    {
+        try
+        {
+            var token = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest(new { message = "Geçersiz token" });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Token == token);
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Geçersiz token" });
+            }
+
+            user.Token = null;
+            await _context.SaveChangesAsync();
+
+            _loggingService.LogInfo("Kullanıcı çıkış yaptı.");
+            return Ok(new { message = "Çıkış yapıldı" });
+        }
+        catch (Exception ex)
+        {
+            _loggingService.LogError("Logout işlemi sırasında hata oluştu.", ex);
             return StatusCode(500, new { message = "Beklenmedik bir hata oluştu." });
         }
     }
