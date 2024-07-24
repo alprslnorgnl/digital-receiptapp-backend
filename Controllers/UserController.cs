@@ -166,35 +166,8 @@ public class UserController : ControllerBase
             }
             
 
-            //EMAİL GİRİLMİŞ İSE
-            if (!string.IsNullOrEmpty(resetDto.Phone))
-            {
-                var user1 = await _context.Users.FirstOrDefaultAsync(u => u.Email == resetDto.Email);
-
-                if(user1 == null)
-                {
-                    return BadRequest(new {message = "Bu mail adresine kayıtlı kullanıcı bulunmamaktadır"});
-                }
-
-                // OTP kodu oluştur ve gönder
-                var otpCode = _otpService.GenerateOtpCode();
-                var result = await _otpService.SendOtpEmailAsync(resetDto.Email!, otpCode);
-
-                if (!result)
-                {
-                    _loggingService.LogError("OTP e-posta ile gönderilemedi.", new Exception("OTP gönderilemedi."));
-                    return StatusCode(500, new { message = "OTP e-posta ile gönderilemedi" });
-                }
-
-                // OTP kodunu sakla
-                _otpService.StoreOtpCode(resetDto.Email!, otpCode);
-
-                _loggingService.LogInfo("OTP kodu e-posta adresine gönderildi.");
-                return Ok(new { message = "OTP kodu e-posta adresine gönderildi" });
-            }
-
             //PHONE GİRİLMİŞ İSE
-            if (!string.IsNullOrEmpty(resetDto.Email))
+            if (!string.IsNullOrEmpty(resetDto.Phone))
             {
                 var user1 = await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == resetDto.Phone);
 
@@ -214,6 +187,31 @@ public class UserController : ControllerBase
 
                 _loggingService.LogInfo("OTP kodu telefon numarasına gönderildi.");
                 return Ok(new { message = "OTP kodu telefon numarasına gönderildi" });
+            }
+
+            //EMAİL GİRİLMİŞ İSE
+            if (!string.IsNullOrEmpty(resetDto.Email))
+            {
+                var user1 = await _context.Users.FirstOrDefaultAsync(u => u.Email == resetDto.Email);
+
+                if(user1 == null)
+                {
+                    return BadRequest(new {message = "Bu mail adresine kayıtlı kullanıcı bulunmamaktadır"});
+                }
+
+                var otpCode = _otpService.GenerateOtpCode();
+                var result = await _otpService.SendOtpEmailAsync(resetDto.Email!, otpCode);
+
+                if (!result)
+                {
+                    _loggingService.LogError("OTP e-posta ile gönderilemedi.", new Exception("OTP gönderilemedi."));
+                    return StatusCode(500, new { message = "OTP e-posta ile gönderilemedi" });
+                }
+
+                _otpService.StoreOtpCode(resetDto.Email!, otpCode);
+
+                _loggingService.LogInfo("OTP kodu e-posta adresine gönderildi.");
+                return Ok(new { message = "OTP kodu e-posta adresine gönderildi" });
             }
 
             return BadRequest(new { message = "Geçersiz istek" });
@@ -347,11 +345,12 @@ public class UserController : ControllerBase
 
             bool otpIsValid = false;
 
-            //EMAİL DOĞRULAMA İŞLEMLERİ GERÇEKLEŞTİRİLİR
+            //PHONE DOĞRULAMA İŞLEMLERİ GERÇEKLEŞTİRİLİR
             if (!string.IsNullOrEmpty(otpVDto.Phone))
             {
                 // OTP kodunu doğrulama işlemi
-                otpIsValid = await Task.Run(() => _otpService.ValidateStoredOtpCode(otpVDto.Email!, otpVDto.Code));
+                Console.WriteLine("otp code: ", otpVDto.Code!);
+                otpIsValid = await _otpService.ValidateOtpSmsCode(otpVDto.Phone!, otpVDto.Code!);
 
                 if (!otpIsValid)
                 {
@@ -361,11 +360,11 @@ public class UserController : ControllerBase
                 return Ok(new { message = "OTP kodu doğrulandı" });
             }
 
-            //PHONE DOĞRULAMA İŞLEMLERİ GERÇEKLEŞTİRİLİR
+            //EMAİL DOĞRULAMA İŞLEMLERİ GERÇEKLEŞTİRİLİR
             if (!string.IsNullOrEmpty(otpVDto.Email))
             {
                 // OTP kodunu doğrulama işlemi
-                otpIsValid = _otpService.ValidateStoredOtpCode(otpVDto.Phone!, otpVDto.Code);
+                otpIsValid = await Task.Run(() => _otpService.ValidateStoredOtpCode(otpVDto.Email!, otpVDto.Code));
 
                 if (!otpIsValid)
                 {

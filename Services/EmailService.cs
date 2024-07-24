@@ -29,13 +29,13 @@ public class EmailService : IEmailService
         try
         {
             var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("YourAppName", _configuration["EmailSettings:From"]));
+            message.From.Add(new MailboxAddress("Digital Receipt App", _configuration["EmailSettings:From"]));
             message.To.Add(new MailboxAddress("", email));
-            message.Subject = "Your OTP Code";
+            message.Subject = "OTP Code";
 
             message.Body = new TextPart("plain")
             {
-                Text = $"Your OTP code is: {otpCode}"
+                Text = $"OTP code: {otpCode}"
             };
 
             using var client = new SmtpClient();

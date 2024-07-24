@@ -47,7 +47,7 @@ public class ChatGptService : IChatGptService
         var completionRequest = new ChatCompletionCreateRequest
         {
             Messages = messages,
-            Model = Models.Gpt_3_5_Turbo
+            Model = Models.Gpt_4o
         };
 
         var result = await _openAIService.ChatCompletion.CreateCompletion(completionRequest);
